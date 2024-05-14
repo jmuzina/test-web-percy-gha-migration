@@ -29,10 +29,13 @@ jobs:
         run: |
           if [[ -z "${{ secrets.TEST_SECRET }}" ]]; then
             echo "No access to secrets in the base repo."
-            #exit 1
+            # exit 1
           else
             echo "We have proper access to secrets in the base repo."
           fi
+          echo "workflow_run: ${{ toJson(github.event.workflow_run) }}"
+          echo "repo: ${{ github.event.workflow_run.repository.full_name }}"
+          echo "workflow id: ${{ github.event.workflow_run.workflow_id }}"
 
   upload:
     needs: test
@@ -41,9 +44,10 @@ jobs:
       - name: Download artifact from workflow run
         uses: actions/download-artifact@v4
         with:
-          name: "web-artifact-${{ github.event.workflow_run.workflow_id }}"
+          name: "web-artifact-${{ github.event.workflow_run.id }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.event.workflow_run.repository }}
+          repository: ${{ github.event.workflow_run.repository.full_name }}
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Replace SCM files with artifact files
         run: |
           set -e
