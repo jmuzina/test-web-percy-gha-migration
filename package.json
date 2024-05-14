@@ -30,6 +30,7 @@
     "watch:scss": "sass --load-path=node_modules --embed-sources --style=compressed scss:build/css --watch",
     "watch:essential": "sass --load-path=node_modules --embed-sources --style=compressed scss/build.scss:build/css/build.css --watch",
     "watch": "yarn build && yarn watch:scss",
+    "percy": "percy snapshot snapshots.js",
     "clean": "rm -rf build node_modules/ yarn-error.log"
   },
   "files": [
