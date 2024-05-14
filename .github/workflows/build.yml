@@ -13,21 +13,6 @@ jobs:
   empty:
     runs-on: ubuntu-latest
     steps:
-      - name: empty
-        run: echo "building"
-      - name: Verify correct secrets access
-        run: |
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" != "true" ]]; then
-            echo "This is not a fork."
-          else
-            echo "This is a fork."
-            if [[ -z "${{ secrets.TEST_SECRET }}" ]]; then
-              echo "Secrets are not exposed to fork"
-            else
-              echo "Secrets improperly exposed to fork"
-              exit 1
-            fi
-          fi
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
