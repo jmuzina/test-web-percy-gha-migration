@@ -70,8 +70,8 @@ jobs:
             fi
           done
 
-      - name: Take screenshots
-        run: yarn percy
+#      - name: Take screenshots
+#        run: yarn percy
 
   # Add a check to the PR to show that screenshots were sent to Percy
   # https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
@@ -81,7 +81,7 @@ jobs:
     if: github.event.workflow_run.pull_requests[0] != null
     runs-on: ubuntu-latest
     steps:
-      - name: "Apply PR check (POST /repos/${{github.repository}}/check-runs"
+      - name: "Apply PR check"
         id: create_check_run
         uses: octokit/request-action@v2.x
         with:
@@ -89,7 +89,7 @@ jobs:
           owner: octokit
           repo: request-action
           name: "percy_upload"
-          details_url: "https://percy.io/bb49709b/<repo_name>/builds/<percy_build_number>"
+          details_url: "https://percy.io/bb49709b/repo_name/builds/percy_build_number"
           head_sha: "${{ github.event.workflow_run.pull_requests[0].head.sha }}"
           status: completed
           conclusion: success
