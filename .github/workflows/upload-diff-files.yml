@@ -1,4 +1,4 @@
-name: "Build web artifact"
+name: "Copy "
 
 on:
   pull_request:
