@@ -42,3 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "web-artifact-${{ github.run_id }}"
+          path: build.tar.gz
