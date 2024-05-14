@@ -15,7 +15,7 @@ app = FlaskBase(
 session = talisker.requests.get_session()
 
 @app.route("/")
-def contribute_index():
+def index():
     return flask.make_response(
         flask.render_template(
             "index.html"
