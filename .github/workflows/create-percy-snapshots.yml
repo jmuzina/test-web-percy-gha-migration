@@ -20,62 +20,60 @@ jobs:
           else
             echo "Previous workflow run was successful."
           fi
-          echo "Printing Github Context"
-          echo "${{ toJson(github)}}"
-#      - name: Checkout SCM
-#        uses: actions/checkout@v4
-#
-#      - name: Download artifact from workflow run
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: "web-artifact-${{ github.event.workflow_run.id }}"
-#          github-token: ${{ secrets.GITHUB_TOKEN }}
-#          repository: ${{ github.event.workflow_run.repository.full_name }}
-#          run-id: ${{ github.event.workflow_run.id }}
-#
-#      - name: Install Python
-#        uses: actions/setup-python@v5.1.0
-#        with:
-#          python-version: 3.10.14
-#
-#      - name: Install NodeJS
-#        uses: actions/setup-node@v4.0.2
-#        with:
-#          node-version: 20
-#
-#      - name: Install dependencies
-#        run: yarn && pip3 install -r requirements.txt
-#
-#      - name: Replace SCM files with artifact files
-#        run: |
-#          set -e
-#          rm -rf templates/ scss/
-#          tar xzf build.tar.gz
-#          rm build.tar.gz
-#
-#      - name: Build
-#        run: yarn build
-#
-#      - name: Start testing server
-#        env:
-#          SECRET_KEY: local_development_fake_key
-#        run: ./entrypoint 0.0.0.0:8101 &
-#
-#      - name: Wait for server availability
-#        run: |
-#          while true; do
-#            if curl -sSf "http://0.0.0.0:8101" > /dev/null; then
-#              break
-#            else
-#              echo "Waiting for server to start..."
-#              sleep 2
-#            fi
-#          done
-#
-#      - name: Take screenshots
-#        run: yarn percy
+      - name: Checkout SCM
+        uses: actions/checkout@v4
 
-  # Add a check to the PR based on the percy status
+      - name: Download artifact from workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: "web-artifact-${{ github.event.workflow_run.id }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.workflow_run.repository.full_name }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Install Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: 3.10.14
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn && pip3 install -r requirements.txt
+
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/ scss/
+          tar xzf build.tar.gz
+          rm build.tar.gz
+
+      - name: Build
+        run: yarn build
+
+      - name: Start testing server
+        env:
+          SECRET_KEY: local_development_fake_key
+        run: ./entrypoint 0.0.0.0:8101 &
+
+      - name: Wait for server availability
+        run: |
+          while true; do
+            if curl -sSf "http://0.0.0.0:8101" > /dev/null; then
+              break
+            else
+              echo "Waiting for server to start..."
+              sleep 2
+            fi
+          done
+
+      - name: Take screenshots
+        run: yarn percy
+
+  # Add a check to the PR to show that screenshots were sent to Percy
   # https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
   apply_pr_check:
     name: Apply PR check
@@ -83,10 +81,6 @@ jobs:
     if: github.event.workflow_run.pull_requests[0] != null
     runs-on: ubuntu-latest
     steps:
-      - name: Debug
-        run: |
-          echo "Printing Github Context"
-          echo "${{ toJson(github)}}"
       - name: "Apply PR check (POST /repos/${{github.repository}}/check-runs"
         id: create_check_run
         uses: octokit/request-action@v2.x
@@ -94,7 +88,8 @@ jobs:
           route: POST /repos/${{github.repository}}/check-runs
           owner: octokit
           repo: request-action
-          name: "Percy diff"
+          name: "percy_upload"
+          details_url: "https://percy.io/bb49709b/<repo_name>/builds/<percy_build_number>"
           head_sha: "${{ github.event.workflow_run.pull_requests[0].head.sha }}"
           status: completed
           conclusion: success
