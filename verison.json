@@ -1,0 +1,4 @@
+{
+    "name": "This is a test file to allow bumping version number to test GHA functionality",
+    "version": 1
+}
