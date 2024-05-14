@@ -1,4 +1,4 @@
-name: "Build web artifact"
+name: "Upload artifacts for Percy screenshots"
 
 on:
   pull_request:
