@@ -1,9 +1,9 @@
-name: "Upload screenshots"
+name: "Create Percy screenshots"
 
 on:
   workflow_run:
     workflows:
-      - "Build web artifact"
+      - "Upload artifacts for Percy screenshots"
     types:
       - completed
 

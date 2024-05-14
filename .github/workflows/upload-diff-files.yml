@@ -1,4 +1,4 @@
-name: "Copy "
+name: "Upload artifacts for Percy screenshots"
 
 on:
   pull_request:
