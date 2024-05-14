@@ -13,6 +13,11 @@ jobs:
     if: "! github.event.pull_request.head.repo.fork "
     runs-on: ubuntu-latest
     steps:
-      - name: empty
+      - name: Verify correct secrets access
         run: |
-          echo "successfully ran job"
+          if [[ -z "${{ secrets.TEST_SECRET }}" ]]; then
+            echo "No access to secrets in the base repo"
+            exit 1
+          else
+            echo "We have proper access to secrets in the base repo"
+          fi
