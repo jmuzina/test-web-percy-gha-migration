@@ -4,10 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  # remove on push when moving to apps; this is just for faster GHA testing
-#  push:
-#    branches:
-#      - main
 
 jobs:
   copy_artifact:

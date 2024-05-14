@@ -89,7 +89,6 @@ jobs:
           owner: octokit
           repo: request-action
           name: "percy_upload"
-          details_url: "https://percy.io/bb49709b/repo_name/builds/percy_build_number"
           head_sha: "${{ github.event.workflow_run.pull_requests[0].head.sha }}"
           status: completed
           conclusion: success
