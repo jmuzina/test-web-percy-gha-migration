@@ -10,7 +10,8 @@ on:
 #      - main
 
 jobs:
-  empty:
+  copy_artifact:
+    name: Copy changed files to GHA artifact
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
