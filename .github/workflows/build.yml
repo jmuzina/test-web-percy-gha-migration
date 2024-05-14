@@ -5,9 +5,9 @@ on:
     branches:
       - main
   # remove on push when moving to apps; this is just for faster GHA testing
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
 
 jobs:
   empty:
@@ -28,3 +28,17 @@ jobs:
               exit 1
             fi
           fi
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            templates/
+            scss/
+
+      - name: Compress artifact
+        run: tar -czf build.tar.gz templates/ scss/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "web-artifact-${{ github.run_id }}"

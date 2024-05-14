@@ -33,3 +33,21 @@ jobs:
           else
             echo "We have proper access to secrets in the base repo."
           fi
+
+  upload:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact from workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: "web-artifact-${{ github.event.workflow_run.workflow_id }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.workflow_run.repository }}
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/ scss/ 
+          tar xzf build.tar.gz 
+          rm build.tar.gz
+          tree
