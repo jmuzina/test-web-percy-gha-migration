@@ -1,0 +1,18 @@
+name: "Upload screenshots"
+
+on:
+  workflow_run:
+    workflows:
+      - "Build web artifact"
+    types:
+      - completed
+
+jobs:
+  empty:
+    # only run on base repo
+    if: "! github.event.pull_request.head.repo.fork "
+    runs-on: ubuntu-latest
+    steps:
+      - name: empty
+        run: |
+          echo "successfully ran job"
