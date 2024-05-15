@@ -58,19 +58,29 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Start testing server
-        env:
-          SECRET_KEY: local_development_fake_key
-        run: ./entrypoint 0.0.0.0:8101 &
+#      - name: Start testing server
+#        env:
+#          SECRET_KEY: local_development_fake_key
+#        run: ./entrypoint 0.0.0.0:8101 &
 
       - name: Wait for server availability
         run: |
-          while true; do
-            if curl localhost:8101/_status/check -I; then
+          sleep_interval_secs=2
+          max_wait_time_secs=30
+          wait_time_secs=0
+          while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
+            if curl -s localhost:8101/_status/check -I >/dev/null; then
+              echo "Server is up!"
               break
             else
-              echo "Waiting for server to start..."
-              sleep 2
+              wait_time_secs=$((wait_time_secs + sleep_interval_secs))
+              if [ "$wait_time_secs" -ge "$max_wait_time_secs" ]; then
+                echo "[TIMEOUT ERROR]: Local testing server failed to respond within $max_wait_time_secs seconds!"
+                exit 1
+              else
+                echo "Waiting for server to start..."
+                sleep "$sleep_interval_secs"
+              fi
             fi
           done
 
