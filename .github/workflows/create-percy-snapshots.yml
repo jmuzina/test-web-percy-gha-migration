@@ -12,7 +12,7 @@ jobs:
     name: Build project with proposed changes & take Percy snapshots
     runs-on: ubuntu-latest
     outputs:
-      pr_head_sha: ${{ steps.get_pr_head_sha.outputs.sha }}
+      pr_head_sha: ${{ steps.get_pr_data.outputs.sha }}
     steps:
       - name: Verify that triggering workflow run passed
         run: |
@@ -33,6 +33,15 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/docs/examples/ scss/
+          tar xzf build.tar.gz
+          rm build.tar.gz
+          mv examples/ templates/docs/.
+          tree
+          
       - name: Install Python
         uses: actions/setup-python@v5.1.0
         with:
@@ -46,13 +55,6 @@ jobs:
       - name: Install dependencies
         run: yarn && pip3 install -r requirements.txt
 
-      - name: Replace SCM files with artifact files
-        run: |
-          set -e
-          rm -rf templates/ scss/
-          tar xzf build.tar.gz
-          rm build.tar.gz
-
       - name: Build
         run: yarn build
 
@@ -63,21 +65,37 @@ jobs:
 
       - name: Wait for server availability
         run: |
-          while true; do
-            if curl -sSf "http://0.0.0.0:8101" > /dev/null; then
+          sleep_interval_secs=2
+          max_wait_time_secs=30
+          wait_time_secs=0
+          while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
+            if curl -s localhost:8101/_status/check -I >/dev/null; then
+              echo "Server is up!"
               break
             else
-              echo "Waiting for server to start..."
-              sleep 2
+              wait_time_secs=$((wait_time_secs + sleep_interval_secs))
+              if [ "$wait_time_secs" -ge "$max_wait_time_secs" ]; then
+                echo "[TIMEOUT ERROR]: Local testing server failed to respond within $max_wait_time_secs seconds!"
+                exit 1
+              else
+                echo "Waiting for server to start..."
+                sleep "$sleep_interval_secs"
+              fi
             fi
           done
 
-      - name: Get PR Head SHA
+      - name: Get PR data
         if: github.event.workflow_run.event=='pull_request'
-        id: get_pr_head_sha
-        run: echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
+        id: get_pr_data
+        run: |
+          echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
+          echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
 
-#      - name: Take screenshots
+#      - name: Take screenshots & upload to Percy
+#        env:
+#          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+#          PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
+#          PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
 #        run: yarn percy
 
   # Add a check to the PR to show that screenshots were sent to Percy
