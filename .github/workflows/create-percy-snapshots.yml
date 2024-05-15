@@ -11,6 +11,8 @@ jobs:
   upload:
     name: Build project with proposed changes & take Percy snapshots
     runs-on: ubuntu-latest
+    outputs:
+      pr_head_sha: ${{ steps.get_pr_head_sha.outputs.sha }}
     steps:
       - name: Verify that triggering workflow run passed
         run: |
@@ -70,6 +72,11 @@ jobs:
             fi
           done
 
+      - name: Get PR Head SHA
+        if: github.event.workflow_run.event=='pull_request'
+        id: get_pr_head_sha
+        run: echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
+
 #      - name: Take screenshots
 #        run: yarn percy
 
@@ -81,10 +88,6 @@ jobs:
     if: github.event.workflow_run.event=='pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Get PR Head SHA
-        id: get_pr_head_sha
-        run: echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
-
       - name: Apply PR check
         id: create_check_run
         uses: octokit/request-action@v2.x
@@ -93,7 +96,7 @@ jobs:
           owner: octokit
           repo: request-action
           name: "percy_upload"
-          head_sha: "${{ steps.get_pr_head_sha.outputs.sha }}"
+          head_sha: "${{ needs.upload.outputs.pr_head_sha }}"
           status: completed
           conclusion: success
         env:
