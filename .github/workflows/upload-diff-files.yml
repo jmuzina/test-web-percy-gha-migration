@@ -16,12 +16,25 @@ jobs:
           sparse-checkout: |
             templates/
             scss/
+            
+      - name: Make artifact directory
+        run: mkdir -p artifact
+
+        # Archive the PR number associated with this workflow since it won't be available in the base workflow context
+        # https://github.com/orgs/community/discussions/25220
+      - name: Archive PR number
+        if: github.event_name=='pull_request'
+        working-directory: artifact
+        run: echo ${{ github.event.number }} > pr_num.txt
 
       - name: Compress artifact
-        run: tar -czf build.tar.gz templates/ scss/
+        working-directory: artifact
+        run: |
+          cp -R ../templates/ ../scss/ .
+          tar -czf build.tar.gz *
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: "web-artifact-${{ github.run_id }}"
-          path: build.tar.gz
+          path: artifact/build.tar.gz
