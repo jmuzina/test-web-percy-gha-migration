@@ -33,6 +33,15 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/docs/examples/ scss/
+          tar xzf build.tar.gz
+          rm build.tar.gz
+          mv examples/ templates/docs/.
+          tree
+          
       - name: Install Python
         uses: actions/setup-python@v5.1.0
         with:
@@ -45,15 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: yarn && pip3 install -r requirements.txt
-
-      - name: Replace SCM files with artifact files
-        run: |
-          set -e
-          rm -rf templates/docs/examples/ scss/
-          tar xzf build.tar.gz
-          rm build.tar.gz
-          mv examples/ templates/docs/.
-          tree
 
       - name: Build
         run: yarn build
