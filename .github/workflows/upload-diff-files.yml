@@ -25,7 +25,9 @@ jobs:
       - name: Archive PR number
         if: github.event_name=='pull_request'
         working-directory: artifact
-        run: echo ${{ github.event.number }} > pr_num.txt
+        run: |
+          echo ${{ github.event.number }} > pr_num.txt
+          echo ${{ github.event.pull_request.head.sha }} >> pr_head_sha.txt
 
       - name: Compress artifact
         working-directory: artifact
