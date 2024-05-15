@@ -69,6 +69,7 @@ jobs:
               sleep 2
             fi
           done
+          echo ${{ github.event.workflow_run.event }}
 
 #      - name: Take screenshots
 #        run: yarn percy
@@ -78,7 +79,7 @@ jobs:
   apply_pr_check:
     name: Apply PR check
     needs: upload
-    if: github.event.workflow_run.pull_requests[0] != null
+    if: github.event.workflow_run.event=='pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: "Apply PR check"
