@@ -12,7 +12,7 @@ jobs:
     name: Build project with proposed changes & take Percy snapshots
     runs-on: ubuntu-latest
     outputs:
-      pr_head_sha: ${{ steps.get_pr_head_sha.outputs.sha }}
+      pr_head_sha: ${{ steps.get_pr_data.outputs.sha }}
     steps:
       - name: Verify that triggering workflow run passed
         run: |
@@ -52,6 +52,7 @@ jobs:
           rm -rf templates/docs/examples/ scss/
           tar xzf build.tar.gz
           rm build.tar.gz
+          mv examples/ templates/docs/.
           tree
 
       - name: Build
