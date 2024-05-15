@@ -12,7 +12,7 @@ jobs:
     name: Build project with proposed changes & take Percy snapshots
     runs-on: ubuntu-latest
     outputs:
-      pr_head_sha: ${{ steps.get_pr_head_sha.outputs.sha }}
+      pr_head_sha: ${{ steps.get_pr_data.outputs.sha }}
     steps:
       - name: Verify that triggering workflow run passed
         run: |
@@ -33,6 +33,15 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/docs/examples/ scss/
+          tar xzf build.tar.gz
+          rm build.tar.gz
+          mv examples/ templates/docs/.
+          tree
+          
       - name: Install Python
         uses: actions/setup-python@v5.1.0
         with:
@@ -45,14 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: yarn && pip3 install -r requirements.txt
-
-      - name: Replace SCM files with artifact files
-        run: |
-          set -e
-          rm -rf templates/docs/examples/ scss/
-          tar xzf build.tar.gz
-          rm build.tar.gz
-          tree
 
       - name: Build
         run: yarn build
