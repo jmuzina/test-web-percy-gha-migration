@@ -1,6 +1,6 @@
 {
   "name": "test-web-percy-gha-migration",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": {
     "email": "webteam@canonical.com",
     "name": "Canonical Webteam"
