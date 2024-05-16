@@ -133,15 +133,15 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ steps.get_pr_data.outputs.sha }}
           status: completed
-          conclusion: ${{ steps.percy_build_results.outputs.review_state == 'approved' && 'success' || 'failure' }}
+          conclusion: ${{ steps.percy_build_results.outputs.review_state == '\"approved\"' && 'success' || 'failure' }}
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed"
+            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed: ${{ steps.percy_snapshot.outputs.review_state }}"
             text: |
               Percy build was finished at ${{ steps.percy_snapshot.outputs.build_link }}
-              Build is associated with PR # ${{ steps.get_pr_data.outputs.pr }} (https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }})
-              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshots taken.
+              Build is associated with PR https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }}
+              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshot(s) taken.
               The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
