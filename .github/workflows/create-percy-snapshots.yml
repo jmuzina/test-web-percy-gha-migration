@@ -16,6 +16,10 @@ jobs:
       percy_build_link: ${{ steps.percy_snapshot.outputs.build_link }}
       percy_org_id: ${{ steps.percy_snapshot.outputs.org_id }}
       percy_build_id: ${{ steps.percy_snapshot.outputs.build_id }}
+      percy_build_state: ${{ steps.percy_build_results.outputs.build_state }}
+      percy_num_snapshots: ${{ steps.percy_build_results.outputs.num_snapshots }}
+      percy_review_state: ${{ steps.percy_build_results.outputs.review_state }}
+      percy_review_state_reason: ${{ steps.percy_build_results.outputs.review_state_reason }}
     steps:
       - name: Verify that triggering workflow run passed
         run: |
@@ -99,7 +103,7 @@ jobs:
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
         env:
-          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_WRITE }}
           PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
           PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
         run: |
@@ -108,34 +112,72 @@ jobs:
           build_link=$(echo "$percy_output" | sed -n 's/.*Finalized build #.*: \(https:\/\/percy.io\/[^ ]*\).*/\1/p')
           org_id=$(echo "$build_link" | cut -d '/' -f 4)
           build_id=$(echo "$build_link" | cut -d '/' -f 7)
+          
           echo "build_link=$build_link" >> $GITHUB_OUTPUT
           echo "org_id=$org_id" >> $GITHUB_OUTPUT
           echo "build_id=$build_id" >> $GITHUB_OUTPUT
           echo "Percy build created at $build_link"
 
-  # Add a check to the PR to show that screenshots were sent to Percy
-  # https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
-  apply_pr_check:
-    name: Apply PR check
-    needs: upload
-    if: github.event.workflow_run.event=='pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Apply PR check
-        id: create_check_run
+      - name: Create initial Percy status check
+        if: github.event.workflow_run.event=='pull_request'
+        id: create_percy_initial_status_check
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/${{github.repository}}/check-runs
           owner: octokit
           repo: request-action
           name: "percy_upload"
-          head_sha: ${{ needs.upload.outputs.pr_head_sha }}
-          status: completed
-          conclusion: success
-          details_url: ${{ needs.upload.outputs.percy_build_link }}
+          head_sha: ${{ steps.get_pr_data.outputs.sha }}
+          status: in_progress
+          details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ needs.upload.outputs.percy_build_id }} created"
-            text: "Percy build was created at ${{ needs.upload.outputs.percy_build_link }}"
+            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} created"
+            text: "Percy build was created at ${{ steps.percy_snapshot.outputs.build_link }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for Percy build to complete
+        run: npx percy build:wait --build ${{ steps.percy_snapshot.outputs.build_id }}
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_READ }}
+
+      - name: Get Percy build results
+        id: percy_build_results
+        run: |
+          response=$(curl --request GET \
+          	--url https://percy.io/api/v1/builds/${{ steps.percy_snapshot.outputs.build_id }} \
+            --header "Authorization: Token ${{ secrets.PERCY_TOKEN_READ }}"
+          )
+
+          build_state=$(echo $response | jq '.data.attributes."state"')
+          review_state=$(echo $response | jq '.data.attributes."review-state"')
+          review_state_reason=$(echo $response | jq '.data.attributes."review-state-reason"')
+          num_snapshots=$(echo $response | jq '.data.attributes."total-snapshots"')
+          
+          echo "build_state=$build_state" >> $GITHUB_OUTPUT
+          echo "review_state=$review_state" >> $GITHUB_OUTPUT
+          echo "review_state_reason=$review_state_reason" >> $GITHUB_OUTPUT
+          echo "num_snapshots=$num_snapshots" >> $GITHUB_OUTPUT
+
+      - name: Create final Percy status check
+        if: github.event.workflow_run.event=='pull_request'
+        id: create_percy_final_status_check
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/${{github.repository}}/check-runs
+          owner: octokit
+          repo: request-action
+          name: "percy_upload"
+          head_sha: ${{ steps.get_pr_data.outputs.sha }}
+          status: completed
+          conclusion: ${{ steps.percy_build_results.outputs.review_state == 'approved' && 'success' || 'failure' }}
+          details_url: ${{ steps.percy_snapshot.outputs.build_link }}
+          output: |
+            title: "Percy build"
+            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed"
+            text: |
+              Percy build was finished at ${{ steps.percy_snapshot.outputs.build_link }}
+              Build is associated with PR # ${{ steps.get_pr_data.outputs.pr }} (https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }})
+              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshots taken.
+              The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
