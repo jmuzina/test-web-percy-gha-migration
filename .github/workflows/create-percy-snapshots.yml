@@ -48,49 +48,14 @@ jobs:
           tar xzf build.tar.gz
           rm build.tar.gz
           mv examples/ templates/docs/.
-          
-#      - name: Install Python
-#        uses: actions/setup-python@v5.1.0
-#        with:
-#          python-version: 3.10.14
-#
-#      - name: Install NodeJS
-#        uses: actions/setup-node@v4.0.2
-#        with:
-#          node-version: 20
-#
-#      - name: Install dependencies
-#        run: yarn && pip3 install -r requirements.txt
-#
-#      - name: Build
-#        run: yarn build
-#
-#      - name: Start testing server
-#        env:
-#          SECRET_KEY: local_development_fake_key
-#        run: ./entrypoint 0.0.0.0:8101 &
-#
-#      - name: Wait for server availability
-#        run: |
-#          set -e
-#          sleep_interval_secs=2
-#          max_wait_time_secs=30
-#          wait_time_secs=0
-#          while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
-#            if curl -s localhost:8101/_status/check -I; then
-#              echo "Server is up!"
-#              break
-#            else
-#              wait_time_secs=$((wait_time_secs + sleep_interval_secs))
-#              if [ "$wait_time_secs" -ge "$max_wait_time_secs" ]; then
-#                echo "[TIMEOUT ERROR]: Local testing server failed to respond within $max_wait_time_secs seconds!"
-#                exit 1
-#              else
-#                echo "Waiting for server to start..."
-#                sleep "$sleep_interval_secs"
-#              fi
-#            fi
-#          done
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn
 
       - name: Get PR data
         if: github.event.workflow_run.event=='pull_request'
@@ -108,12 +73,8 @@ jobs:
           PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
         run: |
           set -e
-#          percy_output=$(yarn percy)
-#          build_link=$(echo "$percy_output" | sed -n 's/.*Finalized build #.*: \(https:\/\/percy.io\/[^ ]*\).*/\1/p')
-#          org_id=$(echo "$build_link" | cut -d '/' -f 4)
-#          build_id=$(echo "$build_link" | cut -d '/' -f 7)
           
-          echo "build_link=tps://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
+          echo "build_link=https://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
           echo "org_id=bb49709b" >> $GITHUB_OUTPUT
           echo "build_id=34252514" >> $GITHUB_OUTPUT
           echo "Percy build created at $build_link"
@@ -142,6 +103,7 @@ jobs:
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_READ }}
 
+      # See endpoint docn: https://www.browserstack.com/docs/percy/api-reference/builds#get-build-details
       - name: Get Percy build results
         id: percy_build_results
         run: |
@@ -181,3 +143,5 @@ jobs:
               Build is associated with PR # ${{ steps.get_pr_data.outputs.pr }} (https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }})
               There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshots taken.
               The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
