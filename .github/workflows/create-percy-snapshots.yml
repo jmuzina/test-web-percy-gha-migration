@@ -22,15 +22,6 @@ jobs:
       percy_review_state: ${{ steps.percy_build_results.outputs.review_state }}
       percy_review_state_reason: ${{ steps.percy_build_results.outputs.review_state_reason }}
     steps:
-      - name: Verify that triggering workflow run passed
-        run: |
-          set -e
-          if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
-            echo "Previous workflow run was not successful."
-            exit 1
-          else
-            echo "Previous workflow run was successful."
-          fi
 
       - name: Checkout SCM
         uses: actions/checkout@v4
@@ -53,6 +44,16 @@ jobs:
           set -e
           echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
           echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
+
+      - name: Verify that triggering workflow run passed
+        run: |
+          set -e
+          if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
+            echo "Previous workflow run was not successful."
+            exit 1
+          else
+            echo "Previous workflow run was successful."
+          fi
 
       - name: Move artifact files into place to replace SCM
         run: |
@@ -113,7 +114,6 @@ jobs:
           PERCY_CLIENT_ERROR_LOGS: false
         run: |
           set -e
-          
           percy_output=$(yarn percy)
           
           if [[ $percy_output =~ "Build not created" ]]; then
@@ -210,11 +210,10 @@ jobs:
           details_url: ${{ needs.upload.outputs.percy_build_link  }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ needs.upload.outputs.percy_build_id }} failed: ${{ needs.upload.outputs.percy_review_state || 'Unknown review state' }}"
+            summary: "Percy build failed: ${{ needs.upload.outputs.percy_review_state || 'Unknown review state' }}"
             text: |
               Percy build failed or did not start.
               Build is associated with PR https://github.com/${{ github.repository }}/pull/${{ needs.upload.outputs.pr_number }}
-              There were ${{ needs.upload.outputs.percy_num_snapshots }} total snapshot(s) taken.
               The review state reason is: ${{ needs.upload.outputs.percy_review_state_reason }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
