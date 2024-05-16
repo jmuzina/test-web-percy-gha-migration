@@ -104,7 +104,6 @@ jobs:
               fi
             fi
           done
-          echo ${{ toJson(github.event) }}
 
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
