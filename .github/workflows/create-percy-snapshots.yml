@@ -194,7 +194,7 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ steps.get_pr_data.outputs.sha }}
           status: completed
-          conclusion: SUCCESS
+          conclusion: success
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
