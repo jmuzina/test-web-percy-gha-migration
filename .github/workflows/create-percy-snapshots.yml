@@ -91,12 +91,12 @@ jobs:
           echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
           echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
 
-#      - name: Take screenshots & upload to Percy
-#        env:
-#          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
-#          PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
-#          PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
-#        run: yarn percy
+      - name: Take screenshots & upload to Percy
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
+          PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
+        run: yarn percy
 
   # Add a check to the PR to show that screenshots were sent to Percy
   # https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
