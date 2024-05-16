@@ -114,7 +114,6 @@ jobs:
           PERCY_CLIENT_ERROR_LOGS: false
         run: |
           set -e
-          exit 1
           percy_output=$(yarn percy)
           
           if [[ $percy_output =~ "Build not created" ]]; then
