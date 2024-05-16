@@ -21,15 +21,6 @@ jobs:
       percy_review_state: ${{ steps.percy_build_results.outputs.review_state }}
       percy_review_state_reason: ${{ steps.percy_build_results.outputs.review_state_reason }}
     steps:
-      - name: Verify that triggering workflow run passed
-        run: |
-          set -e
-          if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
-            echo "Previous workflow run was not successful."
-            exit 1
-          else
-            echo "Previous workflow run was successful."
-          fi
       - name: Checkout SCM
         uses: actions/checkout@v4
 
@@ -41,57 +32,6 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Replace SCM files with artifact files
-        run: |
-          set -e
-          rm -rf templates/docs/examples/ scss/
-          tar xzf build.tar.gz
-          rm build.tar.gz
-          mv examples/ templates/docs/.
-          
-#      - name: Install Python
-#        uses: actions/setup-python@v5.1.0
-#        with:
-#          python-version: 3.10.14
-#
-#      - name: Install NodeJS
-#        uses: actions/setup-node@v4.0.2
-#        with:
-#          node-version: 20
-#
-#      - name: Install dependencies
-#        run: yarn && pip3 install -r requirements.txt
-#
-#      - name: Build
-#        run: yarn build
-#
-#      - name: Start testing server
-#        env:
-#          SECRET_KEY: local_development_fake_key
-#        run: ./entrypoint 0.0.0.0:8101 &
-#
-#      - name: Wait for server availability
-#        run: |
-#          set -e
-#          sleep_interval_secs=2
-#          max_wait_time_secs=30
-#          wait_time_secs=0
-#          while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
-#            if curl -s localhost:8101/_status/check -I; then
-#              echo "Server is up!"
-#              break
-#            else
-#              wait_time_secs=$((wait_time_secs + sleep_interval_secs))
-#              if [ "$wait_time_secs" -ge "$max_wait_time_secs" ]; then
-#                echo "[TIMEOUT ERROR]: Local testing server failed to respond within $max_wait_time_secs seconds!"
-#                exit 1
-#              else
-#                echo "Waiting for server to start..."
-#                sleep "$sleep_interval_secs"
-#              fi
-#            fi
-#          done
-
       - name: Get PR data
         if: github.event.workflow_run.event=='pull_request'
         id: get_pr_data
@@ -99,24 +39,6 @@ jobs:
           set -e
           echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
           echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
-
-      - name: Take snapshots & upload to Percy
-        id: percy_snapshot
-        env:
-          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_WRITE }}
-          PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
-          PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
-        run: |
-          set -e
-#          percy_output=$(yarn percy)
-#          build_link=$(echo "$percy_output" | sed -n 's/.*Finalized build #.*: \(https:\/\/percy.io\/[^ ]*\).*/\1/p')
-#          org_id=$(echo "$build_link" | cut -d '/' -f 4)
-#          build_id=$(echo "$build_link" | cut -d '/' -f 7)
-          
-          echo "build_link=tps://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
-          echo "org_id=bb49709b" >> $GITHUB_OUTPUT
-          echo "build_id=34252514" >> $GITHUB_OUTPUT
-          echo "Percy build created at $build_link"
 
       - name: Create initial Percy status check
         if: github.event.workflow_run.event=='pull_request'
@@ -137,11 +59,51 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify that triggering workflow run passed
+        run: |
+          set -e
+          if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
+            echo "Previous workflow run was not successful."
+            exit 1
+          else
+            echo "Previous workflow run was successful."
+          fi
+
+      - name: Replace SCM files with artifact files
+        run: |
+          set -e
+          rm -rf templates/docs/examples/ scss/
+          mv examples/ templates/docs/.
+          tree
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Take snapshots & upload to Percy
+        id: percy_snapshot
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_WRITE }}
+          PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
+          PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
+        run: |
+          set -e
+          
+          echo "build_link=https://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
+          echo "org_id=bb49709b" >> $GITHUB_OUTPUT
+          echo "build_id=34252514" >> $GITHUB_OUTPUT
+          echo "Percy build created at $build_link"
+
       - name: Wait for Percy build to complete
         run: npx percy build:wait --build ${{ steps.percy_snapshot.outputs.build_id }}
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_READ }}
 
+      # See endpoint docn: https://www.browserstack.com/docs/percy/api-reference/builds#get-build-details
       - name: Get Percy build results
         id: percy_build_results
         run: |
@@ -171,13 +133,15 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ steps.get_pr_data.outputs.sha }}
           status: completed
-          conclusion: ${{ steps.percy_build_results.outputs.review_state == 'approved' && 'success' || 'failure' }}
+          conclusion: ${{ steps.percy_build_results.outputs.review_state == '\"approved\"' && 'success' || 'failure' }}
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed"
+            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed: ${{ steps.percy_snapshot.outputs.review_state }}"
             text: |
               Percy build was finished at ${{ steps.percy_snapshot.outputs.build_link }}
-              Build is associated with PR # ${{ steps.get_pr_data.outputs.pr }} (https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }})
-              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshots taken.
+              Build is associated with PR https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }}
+              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshot(s) taken.
               The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
