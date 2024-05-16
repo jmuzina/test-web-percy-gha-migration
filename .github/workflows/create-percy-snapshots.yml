@@ -131,6 +131,14 @@ jobs:
           set -e
           
           percy_output=$(yarn percy)
+          
+          if [[ $percy_output =~ "Build not created" ]]; then
+            echo "Build not created."
+            exit 1
+          else
+            echo "Build created successfully"
+          fi
+  
           build_link=$(echo "$percy_output" | sed -n 's/.*Finalized build #.*: \(https:\/\/percy.io\/[^ ]*\).*/\1/p')
           org_id=$(echo "$build_link" | cut -d '/' -f 4)
           build_id=$(echo "$build_link" | cut -d '/' -f 7)
@@ -139,7 +147,7 @@ jobs:
           echo "org_id=$org_id" >> $GITHUB_OUTPUT
           echo "build_id=$build_id" >> $GITHUB_OUTPUT
           
-          echo "Percy build created at $build_link"
+          echo "Percy build $build_id created at $build_link"
 
       - name: Wait for Percy build to complete
         run: npx percy build:wait --build ${{ steps.percy_snapshot.outputs.build_id }}
@@ -169,6 +177,11 @@ jobs:
           echo "review_state=$review_state" >> $GITHUB_OUTPUT
           echo "review_state_reason=$review_state_reason" >> $GITHUB_OUTPUT
           echo "num_snapshots=$num_snapshots" >> $GITHUB_OUTPUT
+          
+          if [ "$review_state" != "approved" ]; then
+            echo "Percy diffs were detected."
+            exit 1
+          fi
 
       - name: Create final Percy status check
         if: github.event.workflow_run.event=='pull_request'
@@ -181,7 +194,7 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ steps.get_pr_data.outputs.sha }}
           status: completed
-          conclusion: ${{ steps.percy_build_results.outputs.review_state == 'approved' && 'success' || 'failure' }}
+          conclusion: SUCCESS
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
