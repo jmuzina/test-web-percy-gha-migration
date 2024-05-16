@@ -104,11 +104,13 @@ jobs:
               fi
             fi
           done
+          echo ${{ toJson(github.event) }}
 
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_WRITE }}
+          PERCY_BRANCH: "${{ github.event.workflow_run.head_repository.full_name }}/${{ github.event.workflow_run.head_branch }}"
           PERCY_PULL_REQUEST: ${{ steps.get_pr_data.outputs.pr }}
           PERCY_COMMIT: ${{ steps.get_pr_data.outputs.sha }}
           PERCY_CLIENT_ERROR_LOGS: false
