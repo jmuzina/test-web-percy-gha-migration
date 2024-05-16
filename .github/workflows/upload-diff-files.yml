@@ -16,7 +16,7 @@ jobs:
           sparse-checkout: |
             templates/docs/examples/
             scss/
-            
+
       - name: Make artifact directory
         run: |
           mkdir -p artifact

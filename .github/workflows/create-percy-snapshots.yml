@@ -46,12 +46,6 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Move artifact files into place to replace SCM
-        run: |
-          set -e
-          mv examples/ templates/docs/.
-          tree
-
       - name: Get PR data
         if: github.event.workflow_run.event=='pull_request'
         id: get_pr_data
@@ -60,33 +54,20 @@ jobs:
           echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
           echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
 
-      - name: Create initial Percy status check
-        if: github.event.workflow_run.event=='pull_request'
-        id: create_percy_initial_status_check
-        uses: octokit/request-action@v2.x
-        with:
-          route: POST /repos/${{github.repository}}/check-runs
-          owner: octokit
-          repo: request-action
-          name: "percy_upload"
-          head_sha: ${{ steps.get_pr_data.outputs.sha }}
-          status: in_progress
-          details_url: ${{ steps.percy_snapshot.outputs.build_link }}
-          output: |
-            title: "Percy build"
-            summary: "Percy build requested"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install NodeJS
-        uses: actions/setup-node@v4.0.2
-        with:
-          node-version: 20
+      - name: Move artifact files into place to replace SCM
+        run: |
+          set -e
+          mv examples/ templates/docs/.
 
       - name: Install Python
         uses: actions/setup-python@v5.1.0
         with:
           python-version: 3.10.14
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
 
       - name: Install dependencies
         run: yarn && pip3 install -r requirements.txt
@@ -106,7 +87,7 @@ jobs:
           max_wait_time_secs=30
           wait_time_secs=0
           while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
-            if curl -s http://0.0.0.0:8101/_status/check -I; then
+            if curl -s localhost:8101/_status/check -I; then
               echo "Server is up!"
               # sometimes if we start the server too soon after it starts responding, percy snapshot errors.
               sleep 5
@@ -141,7 +122,7 @@ jobs:
           else
             echo "Build created successfully"
           fi
-  
+          
           build_link=$(echo "$percy_output" | sed -n 's/.*Finalized build #.*: \(https:\/\/percy.io\/[^ ]*\).*/\1/p')
           org_id=$(echo "$build_link" | cut -d '/' -f 4)
           build_id=$(echo "$build_link" | cut -d '/' -f 7)
@@ -186,7 +167,7 @@ jobs:
             exit 1
           fi
 
-      - name: Create final Percy status check
+      - name: Create successful Percy status check
         if: github.event.workflow_run.event=='pull_request'
         id: create_percy_final_status_check
         uses: octokit/request-action@v2.x
@@ -215,7 +196,7 @@ jobs:
     needs: upload
     if: ${{ failure() }}
     steps:
-      - name: Set Percy status check to failed
+      - name: Create failure Percy status check
         if: ${{ github.event.workflow_run.event=='pull_request' }}
         uses: octokit/request-action@v2.x
         with:
