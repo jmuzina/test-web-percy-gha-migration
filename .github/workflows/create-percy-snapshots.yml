@@ -40,7 +40,6 @@ jobs:
           tar xzf build.tar.gz
           rm build.tar.gz
           mv examples/ templates/docs/.
-          tree
           
       - name: Install Python
         uses: actions/setup-python@v5.1.0
