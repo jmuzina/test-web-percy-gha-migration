@@ -49,6 +49,14 @@ jobs:
           rm build.tar.gz
           mv examples/ templates/docs/.
 
+      - name: Install NodeJS
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn
+
       - name: Get PR data
         if: github.event.workflow_run.event=='pull_request'
         id: get_pr_data
@@ -95,6 +103,7 @@ jobs:
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN_READ }}
 
+      # See endpoint docn: https://www.browserstack.com/docs/percy/api-reference/builds#get-build-details
       - name: Get Percy build results
         id: percy_build_results
         run: |
