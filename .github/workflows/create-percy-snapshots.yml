@@ -117,6 +117,11 @@ jobs:
           review_state_reason=$(echo $response | jq '.data.attributes."review-state-reason"')
           num_snapshots=$(echo $response | jq '.data.attributes."total-snapshots"')
           
+          echo "build state $build_state"
+          echo "review_state $review_state"
+          echo "review_state_reason $review_state_reason"
+          echo "num_snapshots $num_snapshots"
+          
           echo "build_state=$build_state" >> $GITHUB_OUTPUT
           echo "review_state=$review_state" >> $GITHUB_OUTPUT
           echo "review_state_reason=$review_state_reason" >> $GITHUB_OUTPUT
