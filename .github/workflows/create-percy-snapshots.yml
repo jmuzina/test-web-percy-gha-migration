@@ -142,7 +142,7 @@ jobs:
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed: ${{ steps.percy_snapshot.outputs.review_state }}"
+            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed: ${{ steps.percy_build_state.outputs.review_state }}"
             text: |
               Percy build was finished at ${{ steps.percy_snapshot.outputs.build_link }}
               Build is associated with PR https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }}
