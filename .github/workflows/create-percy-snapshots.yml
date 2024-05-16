@@ -106,7 +106,7 @@ jobs:
           max_wait_time_secs=30
           wait_time_secs=0
           while [ "$wait_time_secs" -lt "$max_wait_time_secs" ]; do
-            if curl -s localhost:8101/_status/check -I; then
+            if curl -s http://0.0.0.0:8101/_status/check -I; then
               echo "Server is up!"
               break
             else
