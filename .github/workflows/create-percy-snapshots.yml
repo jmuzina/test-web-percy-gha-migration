@@ -66,7 +66,7 @@ jobs:
         run: |
           set -e
           
-          echo "build_link=tps://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
+          echo "build_link=https://percy.io/bb49709b/test-vanilla-gha-migration/builds/34252514" >> $GITHUB_OUTPUT
           echo "org_id=bb49709b" >> $GITHUB_OUTPUT
           echo "build_id=34252514" >> $GITHUB_OUTPUT
           echo "Percy build created at $build_link"
