@@ -64,8 +64,7 @@ jobs:
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} created"
-            text: "Percy build was created at ${{ steps.percy_snapshot.outputs.build_link }}"
+            summary: "Percy build requested"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
