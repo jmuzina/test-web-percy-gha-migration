@@ -1,2 +1,12 @@
 @import 'vanilla-framework';
 @include vanilla;
+
+// include this mixin to intentionally break percy comparisons by using an unexpected font
+@mixin change-fonts-break-percy-comparison {
+  * {
+    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace !important;
+  }
+}
+
+// uncomment to fail Percy checks intentionally
+@include change-fonts-break-percy-comparison;
