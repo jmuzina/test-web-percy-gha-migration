@@ -143,3 +143,5 @@ jobs:
               Build is associated with PR # ${{ steps.get_pr_data.outputs.pr }} (https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }})
               There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshots taken.
               The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
