@@ -220,10 +220,10 @@ jobs:
           owner: octokit
           repo: request-action
           name: "percy_upload"
-          head_sha: ${{ needs.upload.outputs.percy_build_link  }}
+          head_sha: ${{ needs.upload.outputs.pr_head_sha }}
           status: completed
           conclusion: failure
-          details_url: ${{ needs.upload.outputs.pr_head_sha }}
+          details_url: ${{ needs.upload.outputs.percy_build_link  }}
           output: |
             title: "Percy build"
             summary: "Percy build #${{ needs.upload.outputs.percy_build_id }} failed: ${{ needs.upload.outputs.percy_review_state || 'Unknown review state' }}"
