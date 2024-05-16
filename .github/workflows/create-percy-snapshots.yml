@@ -112,10 +112,10 @@ jobs:
             --header "Authorization: Token ${{ secrets.PERCY_TOKEN_READ }}"
           )
 
-          build_state=$(echo $response | jq '.data.attributes."state"')
-          review_state=$(echo $response | jq '.data.attributes."review-state"')
-          review_state_reason=$(echo $response | jq '.data.attributes."review-state-reason"')
-          num_snapshots=$(echo $response | jq '.data.attributes."total-snapshots"')
+          build_state=$(echo $response | jq '.data.attributes."state"' | tr -d '"')
+          review_state=$(echo $response | jq '.data.attributes."review-state"' | tr -d '"')
+          review_state_reason=$(echo $response | jq '.data.attributes."review-state-reason"' | tr -d '"')
+          num_snapshots=$(echo $response | jq '.data.attributes."total-snapshots"' | tr -d '"')
           
           echo "build state $build_state"
           echo "review_state $review_state"
@@ -138,7 +138,7 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ steps.get_pr_data.outputs.sha }}
           status: completed
-          conclusion: ${{ steps.percy_build_results.outputs.review_state == '\"approved\"' && 'success' || 'failure' }}
+          conclusion: ${{ steps.percy_build_results.outputs.review_state == 'approved' && 'success' || 'failure' }}
           details_url: ${{ steps.percy_snapshot.outputs.build_link }}
           output: |
             title: "Percy build"
