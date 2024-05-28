@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - templates/docs/examples/
-      - scss/
+      - templates/docs/examples/**
+      - scss/**
 
 jobs:
   copy_artifact:
