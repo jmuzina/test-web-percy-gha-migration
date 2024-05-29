@@ -11,22 +11,24 @@ on:
       - opened
       - reopened
       - ready_for_review
-      - labeled
       - synchronize
   workflow_dispatch:
     inputs:
       pr_number:
+        description: "PR number: Numeric identifier of the pull request to run Percy tests against"
+        type: number
         required: true
-        description: Numeric identifier of the pull request to run Percy tests against
 
 jobs:
   copy_artifact:
     name: Copy changed files to GHA artifact
+    if: "!github.event.pull_request.draft || github.event_name == 'workflow_dispatch'"
     runs-on: ubuntu-latest
     steps:
       - name: Preprocess input
         id: preprocess_input
         run: |
+          set -e
           pr_num=""
           commitsh=""
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -38,8 +40,9 @@ jobs:
             pr_num=${{ github.event.inputs.pr_number }}
             pr_response=$(curl -L \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
-              https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.inputs.pr_number }}
+              https://api.github.com/repos/${{ github.repository }}/pulls/$pr_num
             )
+            echo $pr_response
             commitsh=$(echo $pr_response | jq '.head.sha' | tr -d '"')
           fi
           echo "PR Number: $pr_num"
