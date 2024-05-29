@@ -1,6 +1,5 @@
 name: "Prepare Percy build"
 
-# changing this should not cause an action
 on:
   pull_request:
     branches:
@@ -14,13 +13,40 @@ on:
       - ready_for_review
       - labeled
       - synchronize
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        required: true
+        description: Numeric identifier of the pull request to run Percy tests against
 
 jobs:
   copy_artifact:
     name: Copy changed files to GHA artifact
-    if: "!github.event.pull_request.draft || github.event.label.name == 'Percy test requested'"
     runs-on: ubuntu-latest
     steps:
+      - name: Preprocess input
+        id: preprocess_input
+        run: |
+          pr_num=""
+          commitsh=""
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "Workflow called by pull request event. Pulling PR data from GHA event."
+            pr_num=${{ github.event.number }}
+            commitsh=${{ github.event.pull_request.head.sha }}
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Workflow called by manual workflow dispatch. Pulling PR data from Github API using inputted PR #${{ github.event.inputs.pr_number }}."
+            pr_num=${{ github.event.inputs.pr_number }}
+            pr_response=$(curl -L \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.inputs.pr_number }}
+            )
+            commitsh=$(echo $pr_response | jq '.head.sha' | tr -d '"')
+          fi
+          echo "PR Number: $pr_num"
+          echo "Commit SHA: $commitsh"
+          echo "pr_num=$pr_num" >> $GITHUB_OUTPUT
+          echo "commitsh=$commitsh" >> $GITHUB_OUTPUT
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -36,11 +62,10 @@ jobs:
         # Archive the PR number associated with this workflow since it won't be available in the base workflow context
         # https://github.com/orgs/community/discussions/25220
       - name: Archive PR data
-        if: github.event_name == 'pull_request'
         working-directory: artifact
         run: |
-          echo ${{ github.event.number }} > pr_num.txt
-          echo ${{ github.event.pull_request.head.sha }} > pr_head_sha.txt
+          echo ${{ steps.preprocess_input.outputs.pr_num }} >> pr_num.txt
+          echo ${{ steps.preprocess_input.outputs.commitsh}} >> pr_head_sha.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
