@@ -48,8 +48,6 @@ jobs:
         run: |
           set -e
           mv examples/ templates/docs/.
-          # intentional fail to save screenshots
-          exit 1
 
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
