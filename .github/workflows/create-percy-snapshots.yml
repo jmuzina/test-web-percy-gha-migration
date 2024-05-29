@@ -52,7 +52,7 @@ jobs:
 
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
-        uses: './.github/workflows/percy-snapshot'
+        uses: "./.github/workflows/percy-snapshot"
         with:
           branch_name: "pull/${{ steps.get_pr_data.outputs.pr }}"
           commitsh: ${{ steps.get_pr_data.outputs.sha }}
@@ -72,7 +72,7 @@ jobs:
           	--url https://percy.io/api/v1/builds/${{ steps.percy_snapshot.outputs.build_id }} \
             --header "Authorization: Token ${{ secrets.PERCY_TOKEN_READ }}"
           )
-          
+
           # Extract attributes of build and remove quotes
           build_state=$(echo $response | jq '.data.attributes."state"' | tr -d '"')
           review_state=$(echo $response | jq '.data.attributes."review-state"' | tr -d '"')
@@ -142,5 +142,15 @@ jobs:
               Percy build failed or did not start.
               Build is associated with PR https://github.com/${{ github.repository }}/pull/${{ needs.upload.outputs.pr_number }}
               The review state reason is: ${{ needs.upload.outputs.percy_review_state_reason }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove Percy test requested label
+        if: ${{ github.event.workflow_run.event=='pull_request' }}
+        uses: octokit/request-action@v2.x
+        with:
+          route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/Percy%20test%20requested"
+          owner: octokit
+          repo: request-action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
