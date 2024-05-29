@@ -38,7 +38,6 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Get PR data
-        if: github.event.workflow_run.event=='pull_request'
         id: get_pr_data
         run: |
           set -e
@@ -97,7 +96,6 @@ jobs:
           fi
 
       - name: Create successful Percy status check
-        if: github.event.workflow_run.event=='pull_request'
         id: create_percy_final_status_check
         uses: octokit/request-action@v2.x
         with:
@@ -126,7 +124,6 @@ jobs:
     if: ${{ failure() }}
     steps:
       - name: Create failure Percy status check
-        if: ${{ github.event.workflow_run.event=='pull_request' }}
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/${{ github.repository }}/check-runs
@@ -148,7 +145,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Remove Percy test requested label
-        if: ${{ github.event.workflow_run.event=='pull_request' }}
         uses: octokit/request-action@v2.x
         with:
           route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/Percy%20test%20requested"
