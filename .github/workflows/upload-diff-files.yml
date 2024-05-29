@@ -1,5 +1,6 @@
 name: "Prepare Percy build"
 
+# changing this should not cause an action
 on:
   pull_request:
     branches:
@@ -11,7 +12,6 @@ on:
       - opened
       - reopened
       - ready_for_review
-      - synchronize
       - labeled
 
 jobs:
@@ -40,6 +40,8 @@ jobs:
         run: |
           echo ${{ github.event.number }} > pr_num.txt
           echo ${{ github.event.pull_request.head.sha }} > pr_head_sha.txt
+          # intentionally abort to avoid taking percy screenshot
+          exit 1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
