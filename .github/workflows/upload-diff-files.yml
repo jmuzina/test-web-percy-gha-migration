@@ -40,8 +40,6 @@ jobs:
         run: |
           echo ${{ github.event.number }} > pr_num.txt
           echo ${{ github.event.pull_request.head.sha }} > pr_head_sha.txt
-          # intentionally abort to avoid taking percy screenshot
-          exit 1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
