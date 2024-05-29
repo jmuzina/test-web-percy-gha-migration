@@ -39,7 +39,7 @@ jobs:
             echo "Workflow called by manual workflow dispatch. Pulling PR data from Github API using inputted PR #${{ github.event.inputs.pr_number }}."
             pr_num=${{ github.event.inputs.pr_number }}
             pr_response=$(curl -L \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               https://api.github.com/repos/${{ github.repository }}/pulls/$pr_num
             )
             echo $pr_response
