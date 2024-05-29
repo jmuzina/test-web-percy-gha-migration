@@ -35,7 +35,8 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: yarn && pip3 install -r requirements.txt
+      # intentional fail for testing
+      run: exit 1 && yarn && pip3 install -r requirements.txt
 
     - name: Build
       shell: bash
