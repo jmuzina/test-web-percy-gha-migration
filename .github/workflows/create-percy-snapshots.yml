@@ -144,3 +144,13 @@ jobs:
               The review state reason is: ${{ needs.upload.outputs.percy_review_state_reason }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove Percy test requested label
+        if: ${{ github.event.workflow_run.event=='pull_request' }}
+        uses: octokit/request-action@v2.x
+        with:
+          route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/Percy%20test%20requested"
+          owner: octokit
+          repo: request-action
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
