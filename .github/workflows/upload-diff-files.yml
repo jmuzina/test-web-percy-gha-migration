@@ -5,12 +5,19 @@ on:
     branches:
       - main
     paths:
-      - templates/docs/examples/**
-      - scss/**
+      - "templates/docs/examples/**"
+      - "scss/**"
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+      - labeled
 
 jobs:
   copy_artifact:
     name: Copy changed files to GHA artifact
+    if: "!github.event.pull_request.draft || github.event.label.name == 'Percy test requested'"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -28,7 +35,7 @@ jobs:
         # Archive the PR number associated with this workflow since it won't be available in the base workflow context
         # https://github.com/orgs/community/discussions/25220
       - name: Archive PR data
-        if: github.event_name=='pull_request'
+        if: github.event_name == 'pull_request'
         working-directory: artifact
         run: |
           echo ${{ github.event.number }} > pr_num.txt
