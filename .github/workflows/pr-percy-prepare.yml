@@ -12,7 +12,6 @@ on:
       - reopened
       - ready_for_review
       - synchronize
-      - labeled
 
 jobs:
   copy_artifact:
@@ -35,10 +34,11 @@ jobs:
       # Archive the PR number associated with this workflow since it won't be available in the base workflow context
       # https://github.com/orgs/community/discussions/25220
       - name: Archive PR data
+        if: github.event_name=='pull_request'
         working-directory: artifact
         run: |
-          echo ${{ steps.preprocess_input.outputs.pr_num }} >> pr_num.txt
-          echo ${{ steps.preprocess_input.outputs.commitsh}} >> pr_head_sha.txt
+          echo ${{ github.event.number }} > pr_num.txt
+          echo ${{ github.event.pull_request.head.sha }} > pr_head_sha.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
