@@ -12,11 +12,12 @@ on:
       - reopened
       - ready_for_review
       - synchronize
+      - labeled
 
 jobs:
   copy_artifact:
     name: Copy changed files to GHA artifact
-    if: "!github.event.pull_request.draft"
+    if: "!github.event.pull_request.draft || github.event.label.name == 'Percy test requested'"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
