@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pr_head_sha: ${{ steps.get_pr_data.outputs.sha }}
-      pr_number: ${{ steps.get_pr_data.outputs.pr }}
+      pr_number: ${{ steps.get_pr_data.outputs.pr_number }}
       percy_build_link: ${{ steps.percy_snapshot.outputs.build_link }}
       percy_org_id: ${{ steps.percy_snapshot.outputs.org_id }}
       percy_build_id: ${{ steps.percy_snapshot.outputs.build_id }}
