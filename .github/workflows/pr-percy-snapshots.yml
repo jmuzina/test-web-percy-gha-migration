@@ -66,10 +66,17 @@ jobs:
     if: ${{ needs.upload.outputs.pr_number != '' }}
     runs-on: ubuntu-latest
     steps:
+      - name: URL-encode label data for API request
+        id: url_encode
+        run: |
+          set -e
+          test_requested_label_name=$(echo -n "${{ vars.PERCY_TEST_REQUESTED_LABEL_NAME }}" | jq -s -R -r @uri)
+          echo "test_requested_label_name=$test_requested_label_name" >> $GITHUB_OUTPUT
+          
       - name: Remove ${{ vars.PERCY_TEST_REQUESTED_LABEL_NAME }} label
         uses: octokit/request-action@v2.x
         with:
-          route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/${{ vars.PERCY_TEST_REQUESTED_LABEL_NAME }}"
+          route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/${{ steps.url_encode.outputs.test_requested_label_name }}"
           owner: octokit
           repo: request-action
         env:
