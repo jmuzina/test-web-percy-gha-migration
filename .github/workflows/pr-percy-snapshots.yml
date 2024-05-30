@@ -26,9 +26,6 @@ jobs:
       - name: Checkout SCM
         uses: actions/checkout@v4
 
-      - name: Remove SCM files that will be replaced by artifact files
-        run: rm -rf scss/ templates/docs/examples/
-
       - name: Download artifact from workflow run
         uses: actions/download-artifact@v4
         with:
@@ -37,23 +34,25 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Move artifact files into place to replace SCM
+        run: |
+          set -e
+          # artifact directory contains `scss/`, `/examples`, `pr_num.txt`, and `pr_head_sha.txt`. `/examples` must be moved to `templates/docs/`.
+          mv examples/ templates/docs/.
+
       - name: Get PR data
         id: get_pr_data
         run: |
           set -e
           echo "sha=$(cat pr_head_sha.txt)" >> $GITHUB_OUTPUT
-          echo "pr=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
-
-      - name: Move artifact files into place to replace SCM
-        run: |
-          set -e
-          mv examples/ templates/docs/.
+          echo "pr_number=$(cat pr_num.txt)" >> $GITHUB_OUTPUT
 
       - name: Take snapshots & upload to Percy
         id: percy_snapshot
         uses: "./.github/workflows/percy-snapshot"
         with:
-          branch_name: "pull/${{ steps.get_pr_data.outputs.pr }}"
+          branch_name: "pull/${{ steps.get_pr_data.outputs.pr_number }}"
+          pr_number: ${{ steps.get_pr_data.outputs.pr_number }}
           commitsh: ${{ steps.get_pr_data.outputs.sha }}
           percy_token_write: ${{ secrets.PERCY_TOKEN_WRITE }}
 
@@ -93,35 +92,17 @@ jobs:
             exit 1
           fi
 
-      - name: Create successful Percy status check
-        id: create_percy_final_status_check
-        uses: octokit/request-action@v2.x
-        with:
-          route: POST /repos/${{ github.repository }}/check-runs
-          owner: octokit
-          repo: request-action
-          name: "percy_upload"
-          head_sha: ${{ steps.get_pr_data.outputs.sha }}
-          status: completed
-          conclusion: success
-          details_url: ${{ steps.percy_snapshot.outputs.build_link }}
-          output: |
-            title: "Percy build"
-            summary: "Percy build #${{ steps.percy_snapshot.outputs.build_id }} completed: ${{ steps.percy_build_results.outputs.review_state }}"
-            text: |
-              Percy build was finished at ${{ steps.percy_snapshot.outputs.build_link }}
-              Build is associated with PR https://github.com/${{github.repository}}/pull/${{ steps.get_pr_data.outputs.pr }}
-              There were ${{ steps.percy_build_results.outputs.num_snapshots }} total snapshot(s) taken.
-              The review state reason is: ${{ steps.percy_build_results.outputs.review_state_reason }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  failure_cleanup:
-    name: Cleanup & report failure
-    runs-on: ubuntu-latest
+  # Add a check to the PR to show that screenshots were sent to Percy
+  # Manual status check to be removed once IS-GHA integration is complete
+  # https://docs.github.com/en/rest/checks/runs?apiVersion=2022-11-28#create-a-check-run
+  apply_pr_check:
+    name: Apply PR check
     needs: upload
-    if: ${{ failure() }}
+    if: github.event.workflow_run.event=='pull_request'
+    runs-on: ubuntu-latest
     steps:
-      - name: Create failure Percy status check
+      - name: Apply PR check
+        id: create_check_run
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/${{ github.repository }}/check-runs
@@ -130,23 +111,11 @@ jobs:
           name: "percy_upload"
           head_sha: ${{ needs.upload.outputs.pr_head_sha }}
           status: completed
-          conclusion: failure
-          details_url: ${{ needs.upload.outputs.percy_build_link  }}
+          conclusion: success
+          details_url: ${{ needs.upload.outputs.percy_build_link }}
           output: |
             title: "Percy build"
-            summary: "Percy build failed: ${{ needs.upload.outputs.percy_review_state || 'Unknown review state' }}"
-            text: |
-              Percy build failed or did not start.
-              Build is associated with PR https://github.com/${{ github.repository }}/pull/${{ needs.upload.outputs.pr_number }}
-              The review state reason is: ${{ needs.upload.outputs.percy_review_state_reason }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Remove Percy test requested label
-        uses: octokit/request-action@v2.x
-        with:
-          route: "DELETE /repos/${{ github.repository }}/issues/${{ needs.upload.outputs.pr_number }}/labels/Percy%20test%20requested"
-          owner: octokit
-          repo: request-action
+            summary: "Percy build #${{ needs.upload.outputs.percy_build_id }} created"
+            text: "Percy build was created at ${{ needs.upload.outputs.percy_build_link }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
