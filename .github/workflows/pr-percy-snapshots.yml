@@ -63,7 +63,7 @@ jobs:
     needs: upload
     # Run on success or failure; that way if the build fails for some reason the label is still removed
     # This works as long as the get_pr_data step has succeeded, as it needs the PR number. 
-    if: always()
+    if: ${{ needs.upload.outputs.pr_number != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Remove ${{ vars.PERCY_TEST_REQUESTED_LABEL_NAME }} label
