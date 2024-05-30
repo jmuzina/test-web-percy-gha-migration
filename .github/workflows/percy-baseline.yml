@@ -7,8 +7,6 @@ on:
     paths:
       - "templates/docs/examples/**"
       - "scss/**"
-  # for testing only
-  workflow_dispatch:
 
 jobs:
   snapshot:
