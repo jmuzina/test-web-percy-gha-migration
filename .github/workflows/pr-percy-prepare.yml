@@ -45,5 +45,3 @@ jobs:
         with:
           name: "web-artifact-${{ github.run_id }}"
           path: artifact/*
-
-          # this is a change to a file that should not cause a workflow to run.
